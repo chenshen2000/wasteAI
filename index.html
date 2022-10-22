@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>五子棋</title>
     <style>
         * {
@@ -61,6 +62,9 @@
             border-top-style: none;
             border-left-style: none;
         }
+        span{
+            position: fixed;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +75,7 @@
             <button disabled class="who">黑棋先手</button>
         </div>
     </div>
+    <span></span>
 </body>
     <script>
         //简化dom操作
@@ -89,6 +94,10 @@
         function getElement(x,y)
         {
             return document.querySelectorAll('[x="'+ x +'"]')[y];
+        }
+        function gA(obj,x)
+        {
+            return obj.getAttribute(x);
         }
         var rows=10; //行
         var cols=10; //列
@@ -133,6 +142,7 @@
                         alert("此处已有棋子！");
                         return;
                     }
+                    my$("span").style.cssText="top:0;bottom:0;left:0;right:0;";
                     my$(".circle").style.top=this.style.top;
                     my$(".circle").style.left=this.style.left;
                     my$(".circle").style.cssText+="transition: left 1s ease-out 0s,top 1s ease-out 0s";
@@ -151,10 +161,20 @@
                         my$(".circle").style.backgroundColor=nowObj;
                         my$(".who").innerText="轮到白棋下";
                     }
-                    if(match(currentObj.getAttribute("x"),currentObj.getAttribute("y"),currentObj.style.backgroundColor))
+                    if(match(currentObj.getAttribute("x"),currentObj.getAttribute("y"),currentObj.style.backgroundColor,5))
                     {
                         alert("恭喜"+currentObj.style.backgroundColor+"赢了");
-                        window.location.href="./index.html";
+                        window.location.href="./index-AI.html";
+                    }
+                    if(nowObj=="white")
+                    {
+                        setTimeout(function(){
+                            // getElement(currentObj.getAttribute("x")-1,currentObj.getAttribute("y")-1).click();
+                            AI(currentObj);
+                            setTimeout(function(){
+                                my$("span").style.cssText="";
+                            },1000);
+                        },100)
                     }
                     },1000)
                 }
@@ -162,7 +182,7 @@
         }
 
         //匹配周围棋子，检测是否有相同五子
-        function match(x,y,color){
+        function match(x,y,color,number){
 
                 //     "\"判断
                 var count=1;
@@ -188,9 +208,9 @@
                         break;
                     }
                 }
-                if(count==5)
+                if(count==number)
                 {
-                    return true;
+                    return 3;
                 }
                 //  "/"判断
                 count=1;
@@ -216,9 +236,9 @@
                         break;
                     }
                 }
-                if(count==5)
+                if(count==number)
                 {
-                    return true;
+                    return 4;
                 }
                 // 横纵判断
                 var  flag1;
@@ -248,12 +268,458 @@
                             break;
                         }
                     }
-                    if(count==5)
+                    if(count==number)
                     {
-                        return true;
+                        return time+1;
                     }
                 }
               return false;
+            }
+
+            //默认白棋是机器人
+            function AI(obj)
+            {
+                //机器方
+                for(let i=0;i<=rows;i++)
+                {
+                    for(let j=0;j<=cols;j++)
+                    {
+                var result1=match(i,j,"white",4);
+                        if( getElement(i,j).style.backgroundColor=="white" && result1 )
+                        {
+                            if(result1==1)
+                            {
+                                for(let k=i-1;k>=0;k--)
+                                {
+                                    if(getElement(k,j).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(k,j).style.backgroundColor!="black")
+                                        {
+                                            getElement(k,j).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let k=i+1;k<=rows;k++)
+                                {
+                                    if(getElement(k,j).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(k,j).style.backgroundColor!="black")
+                                        {
+                                            getElement(k,j).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==2)
+                            {
+                                for(let k=j-1;k>=0;k--)
+                                {
+                                    if(getElement(i,k).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(i,k).style.backgroundColor!="black")
+                                        {
+                                            getElement(i,k).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let k=j+1;k<=rows;k++)
+                                {
+                                    if(getElement(i,k).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(i,k).style.backgroundColor!="black")
+                                        {
+                                            getElement(i,k).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==3)
+                            {
+                                for(let m=i-1,n=j-1;m>=0 && n>=0;m--,n--)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="black")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let m=i+1,n=j+1;m<=rows&& n<=cols; m++,n++)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="balck")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==4)
+                            {
+                                for(let m=i-1,n=j+1;m>=0 && n<=cols;m--,n++)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="black")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let m=i+1,n=j-1;m<=rows&& n>=0; m++,n--)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="white")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="black")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                //敌人
+                //四子检测
+                for(let i=0;i<=rows;i++)
+                {
+                    for(let j=0;j<=cols;j++)
+                    {
+                        var result1=match(i,j,"black",4);
+                        if( getElement(i,j).style.backgroundColor=="black" && result1 )
+                        {
+                            if(result1==1)
+                            {
+                                for(let k=i-1;k>=0;k--)
+                                {
+                                    if(getElement(k,j).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(k,j).style.backgroundColor!="white")
+                                        {
+                                            getElement(k,j).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let k=i+1;k<=rows;k++)
+                                {
+                                    if(getElement(k,j).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(k,j).style.backgroundColor!="white")
+                                        {
+                                            getElement(k,j).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==2)
+                            {
+                                for(let k=j-1;k>=0;k--)
+                                {
+                                    if(getElement(i,k).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(i,k).style.backgroundColor!="white")
+                                        {
+                                            getElement(i,k).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let k=j+1;k<=rows;k++)
+                                {
+                                    if(getElement(i,k).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(i,k).style.backgroundColor!="white")
+                                        {
+                                            getElement(i,k).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==3)
+                            {
+                                for(let m=i-1,n=j-1;m>=0 && n>=0;m--,n--)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="white")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let m=i+1,n=j+1;m<=rows&& n<=cols; m++,n++)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="white")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(result1==4)
+                            {
+                                for(let m=i-1,n=j+1;m>=0 && n<=cols;m--,n++)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="white")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                                for(let m=i+1,n=j-1;m<=rows&& n>=0; m++,n--)
+                                {
+                                    if(getElement(m,n).style.backgroundColor!="black")
+                                    {
+                                        if(getElement(m,n).style.backgroundColor!="white")
+                                        {
+                                            getElement(m,n).click();
+                                            return;
+                                        }
+                                        else{
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                //三子检测
+                for(let i=0;i<=rows;i++)
+                {
+                    for(let j=0;j<=cols;j++)
+                    {
+                        var result2=match(i,j,"black",3);
+                        if( getElement(i,j).style.backgroundColor=="black" &&  result2)
+                        {
+                            let a,b;
+                            var threeFlag=true
+                            if (result2 == 1) {
+                                for (var k = i - 1; k >= 0; k--) {
+                                    if (getElement(k, j).style.backgroundColor != "black") {
+                                            a=k;
+                                            b=j;
+                                            threeFlag=false;
+                                            break;
+                                    }
+                                }
+                                if(threeFlag)
+                                {
+                                    a=0;
+                                    b=j;
+                                }
+                                for (var k = i + 1; k <= rows; k++) {
+                                    if (getElement(k, j).style.backgroundColor != "black") {
+                                            if(getElement(a,b).style.backgroundColor=="white" || getElement(k,j).style.backgroundColor=="white")
+                                            {
+                                                break;
+                                            }
+                                            else{
+                                                getElement(k,j).click();
+                                                return;
+                                            }
+                                    }
+                                }
+                            }
+                            else if (result2 == 2) {
+                                for (var k = j - 1; k >= 0; k--) {
+                                    if (getElement(i, k).style.backgroundColor != "black") {
+                                            a=i;
+                                            b=k;
+                                            threeFlag=false;
+                                            break;
+                                    }
+                                }
+                                if(threeFlag)
+                                {
+                                    a=i;
+                                    b=0;
+                                }
+                                console.log(i,j,a,b)
+                                for (var k = j + 1; k <= rows; k++) {
+                                    if (getElement(i, k).style.backgroundColor != "black") {
+                                            if(getElement(a,b).style.backgroundColor=="white" || getElement(i,k).style.backgroundColor=="white")
+                                            {
+                                                break;
+                                            }
+                                            else{
+                                                getElement(i,k).click();
+                                                return;
+                                            }
+                                    }
+                                }
+                            }
+                            else if(result2==3)
+                            {
+                                for(var m=i-1,n=j-1;m>=0 && n>=0;m--,n--)
+                                {
+                                    if (getElement(m, n).style.backgroundColor != "black") {
+                                            a=m;
+                                            b=n;
+                                            threeFlag=false;
+                                            break;
+                                    }
+                                }
+                                if(threeFlag)
+                                {
+                                    if(m<0 && n<0)
+                                    {
+                                        a=0;
+                                        b=0;
+                                    }
+                                    else if(m<0)
+                                    {
+                                        a=0;
+                                        b=n;
+                                    }
+                                    else if(n<0)
+                                    {
+                                        a=n;
+                                        b=0;
+                                    }
+                                }
+                                for(var m=i+1,n=j+1;m<=rows&& n<=cols; m++,n++)
+                                {
+                                    if (getElement(m, n).style.backgroundColor != "black") {
+                                            if(getElement(a,b).style.backgroundColor=="white" || getElement(m,n).style.backgroundColor=="white")
+                                            {
+                                                break;
+                                            }
+                                            else{
+                                                getElement(m,n).click();
+                                                return;
+                                            }
+                                    }
+                                }
+                            }
+                            else if(result2==4)
+                            {
+                                for(var m=i-1,n=j+1;m>=0 && n<=cols;m--,n++)
+                                {
+                                    if (getElement(m, n).style.backgroundColor != "black") {
+                                            a=m;
+                                            b=n;
+                                            threeFlag=false;
+                                            break;
+                                    }
+                                }
+                                if(threeFlag)
+                                {
+                                    if(m<0 && n>cols)
+                                    {
+                                        a=0;
+                                        b=cols;
+                                    }
+                                    else if(m<0)
+                                    {
+                                        a=0;
+                                        b=n;
+                                    }
+                                    else if(n>cols)
+                                    {
+                                        a=m;
+                                        b=cos;
+                                    }
+                                }
+                                for(var m=i+1,n=j-1;m<=rows&& n>=0; m++,n--)
+                                {
+                                    if (getElement(m, n).style.backgroundColor != "black") {
+                                            if(getElement(a,b).style.backgroundColor=="white" || getElement(m,n).style.backgroundColor=="white")
+                                            {
+                                                break;
+                                            }
+                                            else{
+                                                getElement(m,n).click();
+                                                return;
+                                            }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                let x=parseInt(gA(obj,"x"));
+                let y=parseInt(gA(obj,"y"));
+                for(let i=x-1;i<=x+1;i++)
+                {
+                    for(let j=y-1;j<y+1;j++)
+                    {
+                        if(i<0 || i>rows || j<0 || j>cols || getElement(i,j).style.backgroundColor!="")
+                        {
+                            continue;
+                        }
+                        else{
+                            getElement(i,j).click();
+                            return;
+                        }
+                    }
+                }
             }
     </script>
 </html>
