@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>五子棋</title>
+		<style>
+			#map {
+				background-color: saddlebrown;
+				border-radius: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="map" height="800" width="800"></canvas>
+		<script>
+			//画棋盘
+			/** @type {HTMLCanvasElement} */
+			var mapcanv = document.getElementById("map");
+			var ctx = mapcanv.getContext("2d");
+			for (let i = 1; i < 16; i++) {
+				ctx.beginPath();
+				ctx.moveTo(50 * i, 50);
+				ctx.lineTo(50 * i, 750);
+				ctx.stroke();
+				ctx.beginPath();
+				ctx.moveTo(50, 50 * i);
+				ctx.lineTo(750, 50 * i);
+				ctx.stroke();
+			}
+			//棋子信息
+			var chessinfo = [{
+				'name': '黑子',
+				'color': 'black'
+			}, {
+				'name': '白子',
+				'color': 'white'
+			}];
+			var chessrec = [];
+			//当前棋子0：黑，1：白
+			let chess = 0;
+			let win = false;
+
+
+			//画棋子
+			function setChess(x, y, c) {
+				ctx.save();
+				ctx.beginPath();
+				ctx.fillStyle = c;
+				ctx.arc(x, y, 25, 0, 2 * Math.PI);
+				ctx.fill();
+				ctx.restore();
+			}
+
+			//点击事件监听
+			mapcanv.addEventListener('click', function(ev) {
+				let x = Math.round(ev.offsetX / 50);
+				let y = Math.round(ev.offsetY / 50);
+
+				if(!putChess(x, y)){
+				return;}
+
+				if (win) return;
+
+				if(!aiputChess(x, y)){
+					aiputChessfollow(x,y);
+				}
+			})
+
+			//玩家落在子，判断落子的范围与胜负
+			function putChess(x, y) {
+
+				let put = false;
+
+				let pos = x + '-' + y;
+
+				if (x * y > 0 && x < 16 && y < 16 && !chessrec.includes(pos)) {
+
+					setChess(x * 50, y * 50, chessinfo[chess].color);
+
+					chessrec.push(pos);
+
+					if (chessrec.length >= 9)
+						checkover(x, y, chess);
+
+					chess ^= 1;
+
+					put = true;
+				}
+				return put;
+			}
+			
+			// 跟随下算法
+					function aiputChessfollow(x,y) {
+			
+					outer:for (let i = -1; i < 2; i++) {
+							for (let j = -1; j < 2; j++) {
+								if (putChess(x+i, y+j))
+									break outer;
+			                }
+			            }
+			
+					}
+
+			// 防守算法
+			function aiputChess(x, y) {
+				
+				//得到目前所有黑棋位置
+				let chs = chessrec.filter((n, i) => i % 2 == 0);
+				//获取当前位置所有能赢的5子数组
+				let arrs = judgewin_5(x,y);
+				
+				for(let k=0;k<arrs.length;k++){
+					let arr = arrs[k];
+					//定义一临时数组，如已下黑子中有此数组元素，则删除此元素
+					//注意要用浅复制，以下两种方法都可以
+					// let temp = arr.slice();
+					let temp = arr.concat();
+					for (let j = 0; j < arr.length; j++) {
+						//从能赢的数组中取出一子
+						let pos = arr[j];						
+						for (let i = 0; i < chs.length; i++) {							
+							if (chs[i] == pos) {
+								temp.splice(temp.indexOf(chs[i]),1);								
+							}
+						}
+						//如临时数组中剩下1或2个元素，则说明黑棋已经活三或冲四
+						if(temp.length<=2&&temp.length>0){
+							let posset=temp[0];
+							if(temp.length==2){
+							   posset = temp[1];
+							}
+							
+							let posxy = posset.split('-');
+							let xp=posxy[0];
+							let yp=posxy[1];							
+							console.log(posset);
+							if(putChess(xp,yp)){
+							return true;}
+						}
+					}
+				}
+				return false;
+
+			}
+
+
+			function checkover(x, y, ch) {
+				let chs = chessrec.filter((n, i) => i % 2 == ch);
+				win = judgewin_5(x, y).some(arr => arr.every(n => chs.includes(n)))
+				if (win) {
+					setTimeout(() => {
+						alert(`恭喜${chessinfo[ch].name}获胜`, 100);
+						location.reload();
+					})
+				}
+				return win;
+
+			}
+
+			function judgewin_9(x, y) {
+				var wins = [
+					[],
+					[],
+					[],
+					[]
+				];
+				for (let i = -4; i <= 4; i++) {
+					let hx = (x + i) > 0 && (x + i) < 16,
+						zx = (y + i) > 0 && (y + i) < 16,
+						zxzx = (y - i) < 16 && (y - i) > 0
+					//横向9子,注意${}中为反单引号，用于字符串拼接
+					if (hx) wins[0].push(`${x+i}-${y}`);
+					//纵向9子
+					if (zx) wins[1].push(`${x}-${y+i}`);
+					//左上右下
+					if (hx && zx) wins[2].push(`${x+i}-${y+i}`);
+					//右上左下
+					if (hx && zxzx) wins[3].push(`${x+i}-${y-i}`);
+				}
+				return wins.filter(arr => arr.length >= 5);
+			}
+
+			function judgewin_5(x, y) {
+				var wins = [];
+				judgewin_9(x, y).forEach(arr => {
+					for (let i = 0; i < arr.length - 4; i++) {
+						wins.push(arr.slice(i, i + 5));
+					}
+				})
+				return wins;
+			}
+		</script>
+	</body>
+</html>
+
