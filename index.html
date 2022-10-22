@@ -42,7 +42,7 @@
             top: 12px;
         }
         .who {
-            float: right;
+            /* float: right; */
             margin-top: 9px;
         }
         .space {
@@ -65,6 +65,13 @@
         span{
             position: fixed;
         }
+        .map{
+            opacity: 0.5;
+            z-index: 1;
+            position: absolute;
+            top: 40px;
+            right: 20px;
+        }
     </style>
 </head>
 <body>
@@ -72,10 +79,11 @@
         <div id="content"></div>
         <div id="state">
             <div class="circle"></div>
-            <button disabled class="who">黑棋先手</button>
+            <button disabled class="who">黑棋先手</button><br>
+            <button class="map">复<br>盘</button>
         </div>
     </div>
-    <span></span>
+    <span></span>   
 </body>
     <script>
         //简化dom操作
@@ -103,6 +111,9 @@
         var cols=10; //列
         var long=20-4; //每枚棋的宽
         var nowObj="black"; //当前棋子，默认黑棋先手
+        var map=[];
+        var repeatFlag=false;
+        var repeatNum; //当前复盘数组元素下标
         //获取元素
         var cObj=my$("#content");
     
@@ -121,6 +132,11 @@
                 tr.appendChild(td);
             }
             table.appendChild(tr);
+        }
+        //复盘
+        my$(".map").onclick=function(){
+            repeatFlag=true;
+            repeat();
         }
         //添加棋子(提前设置能下棋的位置)
         for(var i=0;i<=rows;i++)
@@ -147,36 +163,49 @@
                     my$(".circle").style.left=this.style.left;
                     my$(".circle").style.cssText+="transition: left 1s ease-out 0s,top 1s ease-out 0s";
                     var currentObj=this;
-                    setTimeout(function(){
-                        currentObj.style.cssText+=" background-color: "+ nowObj +"; border: 1px solid black;";
-                        my$(".circle").style.cssText="";
-                    if(nowObj == "white")
-                    {
-                        nowObj="black";
-                        my$(".circle").style.backgroundColor=nowObj;
-                        my$(".who").innerText="轮到黑棋下";
-                    }
-                    else{
-                        nowObj="white";
-                        my$(".circle").style.backgroundColor=nowObj;
-                        my$(".who").innerText="轮到白棋下";
-                    }
-                    if(match(currentObj.getAttribute("x"),currentObj.getAttribute("y"),currentObj.style.backgroundColor,5))
-                    {
-                        alert("恭喜"+currentObj.style.backgroundColor+"赢了");
-                        window.location.href="https://chenshen2000.github.io/wasteAI/";
-                    }
-                    if(nowObj=="white")
-                    {
-                        setTimeout(function(){
-                            // getElement(currentObj.getAttribute("x")-1,currentObj.getAttribute("y")-1).click();
-                            AI(currentObj);
-                            setTimeout(function(){
-                                my$("span").style.cssText="";
-                            },1000);
-                        },100)
-                    }
-                    },1000)
+                    setTimeout(function () {
+                        currentObj.style.cssText += " background-color: " + nowObj + "; border: 1px solid black;";
+                        my$(".circle").style.cssText = "";
+                        if(nowObj=="black")
+                        {
+                            if(!repeatFlag)
+                            {
+                                map.push([gA(currentObj, "x"), gA(currentObj, "y")]);
+                            }
+                        }
+                        if (match(currentObj.getAttribute("x"), currentObj.getAttribute("y"), currentObj.style.backgroundColor, 5)) {
+                            if (confirm("恭喜" + currentObj.style.backgroundColor + "赢了")) {
+                                window.location.href = "https://chenshen2000.github.io/wasteAI/";
+                            }
+                            else {
+                                if(currentObj.style.backgroundColor=="white")
+                                {
+                                    my$("span").style.cssText="top:0;bottom:0;left:0;right:0;";
+                                }
+                                return;
+                            }
+                        }
+                        if (nowObj == "white") {
+                            nowObj = "black";
+                            my$(".circle").style.backgroundColor = nowObj;
+                            my$(".who").innerText = "轮到黑棋下";
+                        }
+                        else {
+                            nowObj = "white";
+                            my$(".circle").style.backgroundColor = nowObj;
+                            my$(".who").innerText = "轮到白棋下";
+                        }
+
+                        if (nowObj == "white") {
+                            setTimeout(function () {
+                                // getElement(currentObj.getAttribute("x")-1,currentObj.getAttribute("y")-1).click();
+                                AI(currentObj);
+                                setTimeout(function () {
+                                    my$("span").style.cssText = "";
+                                }, 1000);
+                            }, 100)
+                        }
+                    }, 1000)
                 }
             }
         }
@@ -601,7 +630,6 @@
                                     a=i;
                                     b=0;
                                 }
-                                console.log(i,j,a,b)
                                 for (var k = j + 1; k <= rows; k++) {
                                     if (getElement(i, k).style.backgroundColor != "black") {
                                             if(getElement(a,b).style.backgroundColor=="white" || getElement(i,k).style.backgroundColor=="white")
@@ -704,21 +732,79 @@
                         }
                     }
                 }
+                //随机添加
                 let x=parseInt(gA(obj,"x"));
                 let y=parseInt(gA(obj,"y"));
-                for(let i=x-1;i<=x+1;i++)
-                {
-                    for(let j=y-1;j<y+1;j++)
+                    var randomArr=[];
+                    for(let i=x-1;i<=x+1;i++)
                     {
-                        if(i<0 || i>rows || j<0 || j>cols || getElement(i,j).style.backgroundColor!="")
+                        for(let j=y-1;j<=y+1;j++)
                         {
-                            continue;
-                        }
-                        else{
-                            getElement(i,j).click();
-                            return;
+                            if(i>=0 && j>=0 && i<=rows && j<=cols && getElement(i,j).style.backgroundColor=="")
+                            {
+                                randomArr.push([i,j]);
+                            }
                         }
                     }
+                    if(randomArr.length==0)
+                    {
+                        for(let i=0;i<=rows;i++)
+                        {
+                            for(let j=0;j<=cols;j++)
+                            {
+                                if(getElement(i,j).style.backgroundColor=="")
+                                {
+                                    if(!repeatFlag)
+                                    {
+                                        map[map.length-1].push(i);
+                                        map[map.length-1].push(j);
+                                    }
+                                    if( repeatFlag)
+                                    {
+                                        i=map[repeatNum][2];
+                                        j=map[repeatNum][3];
+                                    }
+                                    getElement(i,j).click();
+                                    return ;
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        var randomNum=Math.floor(Math.random()*randomArr.length);
+                        if(!repeatFlag)
+                        {
+                            map[map.length-1].push(randomNum);
+                        }
+                        if( repeatFlag)
+                        {
+                            randomNum=map[repeatNum][2];
+                        }
+                         getElement(randomArr[randomNum][0],randomArr[randomNum][1]).click();
+                    }
+            }
+
+            //复盘
+            function repeat(){
+                let len=map.length;
+                for (var i = 0; i <= rows; i++) {
+                    for (var j = 0; j <= cols; j++) {
+                        getElement(i,j).style.backgroundColor="";
+                        getElement(i,j).style.border="";
+                    }
+                }
+                for(let i=0;i<map.length;i++)
+                {
+                    setTimeout(function(){
+                        repeatNum=i;
+                        getElement(map[i][0],map[i][1]).click();
+                        // if(i+1==len){map.splice(0,len);repeatFlag=true;}
+                        setTimeout(function(){
+                            if(len==i+1){ repeatFlag=false;}
+                        },1500*len);
+                        
+                    },2200*i)
+                    
                 }
             }
     </script>
